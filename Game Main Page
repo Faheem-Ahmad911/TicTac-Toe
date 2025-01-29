@@ -1,0 +1,194 @@
+import pygame
+import sys
+
+# Initialize Pygame
+pygame.init()
+
+# Screen Dimensions and Colors
+SCREEN_WIDTH, SCREEN_HEIGHT = 600, 600
+BG_COLOR = (50, 50, 50)  # Background Color
+GRID_COLOR = (255, 255, 255)  # Grid Line Color
+X_COLOR = (200, 0, 0)  # Player X Color
+O_COLOR = (0, 0, 200)  # Player O Color
+TEXT_COLOR = (255, 255, 0)  # Text Color
+BUTTON_COLOR = (100, 200, 100)
+HOVER_COLOR = (150, 250, 150)
+
+# Fonts
+FONT_LARGE = pygame.font.Font(None, 80)
+FONT_SMALL = pygame.font.Font(None, 40)
+
+# Initialize screen
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Tic Tac Toe")
+
+# Game Variables
+board = [["" for _ in range(3)] for _ in range(3)]
+current_player = "X"
+game_over = False
+
+
+def draw_text(text, font, color, center):
+    """Draw text at the specified center."""
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect(center=center)
+    screen.blit(text_surface, text_rect)
+
+
+def draw_grid():
+    """Draw the Tic Tac Toe grid."""
+    for i in range(1, 3):
+        pygame.draw.line(screen, GRID_COLOR, (0, SCREEN_HEIGHT // 3 * i), (SCREEN_WIDTH, SCREEN_HEIGHT // 3 * i), 5)
+        pygame.draw.line(screen, GRID_COLOR, (SCREEN_WIDTH // 3 * i, 0), (SCREEN_WIDTH // 3 * i, SCREEN_HEIGHT), 5)
+
+
+def draw_marks():
+    """Draw X and O marks on the grid."""
+    for row in range(3):
+        for col in range(3):
+            mark = board[row][col]
+            center_x = col * SCREEN_WIDTH // 3 + SCREEN_WIDTH // 6
+            center_y = row * SCREEN_HEIGHT // 3 + SCREEN_HEIGHT // 6
+            if mark == "X":
+                draw_text("X", FONT_LARGE, X_COLOR, (center_x, center_y))
+            elif mark == "O":
+                draw_text("O", FONT_LARGE, O_COLOR, (center_x, center_y))
+
+
+def check_winner():
+    """Check for a winner or draw."""
+    global game_over
+    # Check rows, columns, and diagonals
+    for i in range(3):
+        if board[i][0] == board[i][1] == board[i][2] != "":
+            return board[i][0]
+        if board[0][i] == board[1][i] == board[2][i] != "":
+            return board[0][i]
+    if board[0][0] == board[1][1] == board[2][2] != "":
+        return board[0][0]
+    if board[0][2] == board[1][1] == board[2][0] != "":
+        return board[0][2]
+    # Check for draw
+    if all(board[row][col] != "" for row in range(3) for col in range(3)):
+        return "Draw"
+    return None
+
+
+def reset_game():
+    """Reset the game to its initial state."""
+    global board, current_player, game_over
+    board = [["" for _ in range(3)] for _ in range(3)]
+    current_player = "X"
+    game_over = False
+
+
+def home_screen():
+    """Display the home screen."""
+    screen.fill(BG_COLOR)
+    draw_text("Tic Tac Toe", FONT_LARGE, TEXT_COLOR, (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3))
+    start_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2, 200, 50)
+    exit_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 100, 200, 50)
+
+    mouse_pos = pygame.mouse.get_pos()
+    for button, text in [(start_button, "Start"), (exit_button, "Exit")]:
+        color = HOVER_COLOR if button.collidepoint(mouse_pos) else BUTTON_COLOR
+        pygame.draw.rect(screen, color, button)
+        draw_text(text, FONT_SMALL, BG_COLOR, button.center)
+
+    pygame.display.flip()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if start_button.collidepoint(event.pos):
+                    return
+                if exit_button.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:  # Enter key
+                    return
+                if event.key == pygame.K_BACKSPACE:  # Backspace key
+                    pygame.quit()
+                    sys.exit()
+
+
+def end_screen(winner):
+    """Display the end screen with options for a new game or exit."""
+    screen.fill(BG_COLOR)
+
+    if winner == "Draw":
+        draw_text("It's a Draw!", FONT_SMALL, TEXT_COLOR, (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3))
+    else:
+        draw_text(f"Player {winner} Wins!", FONT_SMALL, TEXT_COLOR, (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3))
+
+    new_game_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2, 200, 50)
+    exit_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 100, 200, 50)
+
+    mouse_pos = pygame.mouse.get_pos()
+    for button, text in [(new_game_button, "New Game"), (exit_button, "Exit")]:
+        color = HOVER_COLOR if button.collidepoint(mouse_pos) else BUTTON_COLOR
+        pygame.draw.rect(screen, color, button)
+        draw_text(text, FONT_SMALL, BG_COLOR, button.center)
+
+    pygame.display.flip()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if new_game_button.collidepoint(event.pos):
+                    reset_game()
+                    return
+                if exit_button.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:  # Enter key
+                    reset_game()
+                    return
+                if event.key == pygame.K_BACKSPACE:  # Backspace key
+                    pygame.quit()
+                    sys.exit()
+
+
+def main():
+    """Main game loop."""
+    global current_player, game_over
+
+    # Show home screen
+    home_screen()
+
+    while True:
+        screen.fill(BG_COLOR)
+        draw_grid()
+        draw_marks()
+
+        if game_over:
+            winner = check_winner()
+            end_screen(winner)
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
+                x, y = event.pos
+                row, col = y // (SCREEN_HEIGHT // 3), x // (SCREEN_WIDTH // 3)
+                if board[row][col] == "":
+                    board[row][col] = current_player
+                    current_player = "O" if current_player == "X" else "X"
+                    winner = check_winner()
+                    if winner:
+                        game_over = True
+
+
+if __name__ == "__main__":
+    main()
